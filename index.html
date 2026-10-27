@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>SatisfyLab - Experiencia Sensorial Interactiva</title>
+  <style>
+    :root {
+      --bg-dark: #0b0d14;
+      --card-bg: rgba(22, 27, 46, 0.65);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-cyan: #00f2fe;
+      --accent-pink: #ff2a85;
+      --accent-purple: #7928ca;
+      --accent-gold: #ffd200;
+      --accent-green: #00ff88;
+      --text-main: #f3f4f6;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Ambient dynamic background */
+    #ambient-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    /* Top Navigation & Controls */
+    header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+      pointer-events: auto;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      background: linear-gradient(180deg, rgba(11, 13, 20, 0.8) 0%, rgba(11, 13, 20, 0.2) 100%);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #00f2fe, #4facfe, #ff2a85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+      animation: logoPulse 4s infinite alternate ease-in-out;
+    }
+
+    @keyframes logoPulse {
+      0% { transform: scale(1) rotate(0deg); filter: hue-rotate(0deg); }
+      100% { transform: scale(1.05) rotate(5deg); filter: hue-rotate(45deg); }
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #fff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      font-size: 0.72rem;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+    }
+
+    /* Tabs Bar */
+    .modes-nav {
+      display: flex;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 5px;
+      border-radius: 40px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mode-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+      transform: translateY(-1px);
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(0, 242, 254, 0.4);
+    }
+
+    .controls-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(1.08);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .icon-btn.active {
+      background: rgba(0, 242, 254, 0.2);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    /* Main Stage Container */
+    #stage-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+    }
+
+    .mode-stage {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .mode-stage.active {
+      display: block;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Bottom Info & Customization Bar */
+    .hud-bar {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 10px 20px;
+      border-radius: 40px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      z-index: 40;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .hud-tip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hud-tip span.key {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 8px;
+      border-radius: 6px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .hud-action-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .hud-action-btn:hover {
+      background: var(--accent-cyan);
+      color: #0b0d14;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.5);
+    }
+
+    /* Bubble Wrap Mode Styles */
+    #bubble-container {
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      padding: 90px 40px 90px 40px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-content: center;
+      gap: 14px;
+    }
+
+    .bubble {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.4) 0%, rgba(100, 180, 255, 0.15) 50%, rgba(20, 40, 80, 0.4) 100%);
+      box-shadow: 
+        inset 0 2px 6px rgba(255, 255, 255, 0.6),
+        inset 0 -3px 8px rgba(0, 0, 0, 0.5),
+        0 6px 14px rgba(0, 0, 0, 0.4),
+        0 0 10px rgba(0, 242, 254, 0.15);
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .bubble::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      width: 16px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.7);
+      transform: rotate(-30deg);
+      filter: blur(0.5px);
+    }
+
+    .bubble:hover:not(.popped) {
+      transform: scale(1.1);
+      box-shadow: 
+        inset 0 2px 8px rgba(255, 255, 255, 0.8),
+        0 8px 20px rgba(0, 242, 254, 0.35);
+    }
+
+    .bubble.popped {
+      background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.4) 100%);
+      box-shadow: 
+        inset 0 3px 10px rgba(0, 0, 0, 0.8),
+        0 1px 3px rgba(0, 0, 0, 0.2);
+      transform: scale(0.92);
+      animation: popSplat 0.2s ease-out forwards;
+      cursor: default;
+    }
+
+    .bubble.popped::after {
+      display: none;
+    }
+
+    @keyframes popSplat {
+      0% { transform: scale(1.2); }
+      50% { transform: scale(0.85); }
+      100% { transform: scale(0.92); }
+    }
+
+    /* Switchboard Mode Styles */
+    #switchboard-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 90px 20px;
+    }
+
+    .switch-board {
+      background: rgba(18, 22, 36, 0.75);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 28px;
+      padding: 36px 42px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+      max-width: 800px;
+    }
+
+    .switch-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .switch-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Heavy Mechanical Switch */
+    .toggle-rocker {
+      width: 54px;
+      height: 90px;
+      background: #11141e;
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.8), 0 4px 10px rgba(0,0,0,0.5);
+      border: 2px solid #202638;
+      overflow: hidden;
+    }
+
+    .toggle-rocker .handle {
+      position: absolute;
+      left: 4px;
+      right: 4px;
+      height: 40px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #333d54, #202638);
+      top: 4px;
+      transition: all 0.15s cubic-bezier(0.2, 0.85, 0.4, 1.2);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+    }
+
+    .toggle-rocker.on .handle {
+      top: 42px;
+      background: linear-gradient(180deg, var(--accent-cyan), #00a3cc);
+      box-shadow: 0 0 18px rgba(0, 242, 254, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.7);
+    }
+
+    /* Big 3D Spring Push Button */
+    .tactile-button {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #252d42, #141824);
+      border: 3px solid #2d364f;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5), inset 0 2px 2px rgba(255, 255, 255, 0.3);
+      position: relative;
+      transition: all 0.1s ease;
+    }
+
+    .tactile-button-core {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ff4b91, #d61c65);
+      box-shadow: 0 4px 10px rgba(255, 42, 133, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.6);
+      transition: all 0.1s ease;
+    }
+
+    .tactile-button:active {
+      transform: translateY(4px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    }
+
+    .tactile-button:active .tactile-button-core {
+      transform: scale(0.92);
+      filter: brightness(1.2);
+      box-shadow: 0 0 25px rgba(255, 42, 133, 0.8);
+    }
+
+    /* Floating Canvas Views */
+    canvas.fullscreen-view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Particles & Splashes */
+    .particle {
+      position: absolute;
+      pointer-events: none;
+      border-radius: 50%;
+      z-index: 100;
+    }
+
+    /* Cursor Ripple */
+    .ripple-effect {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 242, 254, 0.8);
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(0);
+      animation: rippleAnim 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+      z-index: 100;
+    }
+
+    @keyframes rippleAnim {
+      0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
+    }
+
+    /* Audio visualizer bar in header */
+    .audio-visualizer {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      height: 18px;
+    }
+
+    .bar {
+      width: 3px;
+      background: var(--accent-cyan);
+      border-radius: 2px;
+      height: 4px;
+      transition: height 0.1s ease;
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      top: 90px;
+      right: 24px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--accent-cyan);
+      box-shadow: 0 8px 30px rgba(0, 242, 254, 0.25);
+      backdrop-filter: blur(12px);
+      padding: 12px 20px;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 0.85rem;
+      z-index: 999;
+      transform: translateY(-20px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Light Canvas -->
+  <canvas id="ambient-canvas"></canvas>
+
+  <!-- Header & Navigation -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+          <path d="M2 12h20"></path>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">SatisfyLab</div>
+        <div class="brand-subtitle">Experiencia Sensorial ASMR</div>
+      </div>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <nav class="modes-nav">
+      <button class="mode-btn active" data-mode="jelly">
+        <span>🍮</span> Slime Gelatina
+      </button>
+      <button class="mode-btn" data-mode="bubbles">
+        <span>🫧</span> Burbujas 3D
+      </button>
+      <button class="mode-btn" data-mode="cutter">
+        <span>🔪</span> Corte de Jabón
+      </button>
+      <button class="mode-btn" data-mode="sand">
+        <span>🌊</span> Arena Zen & Ondas
+      </button>
+      <button class="mode-btn" data-mode="marbles">
+        <span>✨</span> Esferas Magnéticas
+      </button>
+      <button class="mode-btn" data-mode="switchboard">
+        <span>🎛️</span> Interruptores Táctiles
+      </button>
+    </nav>
+
+    <!-- Right Controls -->
+    <div class="controls-right">
+      <div class="audio-visualizer" id="audio-vis" title="Audio ASMR">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+      </div>
+      <button class="icon-btn active" id="btn-sound" title="Sonido ASMR sintetizado (Activar/Silenciar)">
+        🔊
+      </button>
+      <button class="icon-btn" id="btn-ambient" title="Música Zen ambiental relajante">
+        🎵
+      </button>
+      <button class="icon-btn" id="btn-fullscreen" title="Pantalla Completa">
+        ⛶
+      </button>
+    </div>
+  </header>
+
+  <!-- Interactive Stages -->
+  <main id="stage-container">
+    <!-- Stage 1: Jelly / Slime -->
+    <section class="mode-stage active" id="stage-jelly">
+      <canvas class="fullscreen-view" id="jelly-canvas"></canvas>
+    </section>
+
+    <!-- Stage 2: Bubble Wrap -->
+    <section class="mode-stage" id="stage-bubbles">
+      <div id="bubble-container"></div>
+    </section>
+
+    <!-- Stage 3: Soap Cutter -->
+    <section class="mode-stage" id="stage-cutter">
+      <canvas class="fullscreen-view" id="cutter-canvas"></canvas>
+    </section>
+
+    <!-- Stage 4: Zen Sand Ripples -->
+    <section class="mode-stage" id="stage-sand">
+      <canvas class="fullscreen-view" id="sand-canvas"></canvas>
+    </section>
+
+    <!-- Stage 5: Magnetic Marbles -->
+    <section class="mode-stage" id="stage-marbles">
+      <canvas class="fullscreen-view" id="marbles-canvas"></canvas>
+    </section>
+
+    <!-- Stage 6: Tactile Switchboard -->
+    <section class="mode-stage" id="stage-switchboard">
+      <div id="switchboard-container">
+        <div class="switch-board" id="board-matrix"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- HUD Action & Tips Bar -->
+  <footer class="hud-bar" id="hud-bar">
+    <div class="hud-tip" id="hud-instructions">
+      <span class="key">Arrastrar / Click</span>
+      <span id="hud-text">Toca y estira la gelatina para ver la física elástica.</span>
+    </div>
+    <div id="hud-actions">
+      <!-- Injected per mode -->
+    </div>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div class="toast" id="toast">¡Efecto reiniciado!</div>
+
+  <!-- Main JavaScript Architecture -->
+  <script>
+    /* =====================================================================
+       1. SYNTHETIC ASMR WEB AUDIO ENGINE (Zero external dependencies)
+       ===================================================================== */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+        this.ambientPlaying = false;
+        this.ambientOscs = [];
+        this.ambientGain = null;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioCtx();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      // Satisfying crisp bubble pop
+      pop(pitch = 1) {
+        if (!this.enabled) return;
+        this.init();
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        const baseFreq = 420 * pitch * (0.9 + Math.random() * 0.25);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(baseFreq, t);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 2.8, t + 0.04);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, t + 0.09);
+
+        gain.gain.setValueAtTime(0.35, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.11);
+        this.pulseVisualizer();
+      }
+
+      // Squishy slime wobble sound
+      squish(velocity = 1) {
+        if (!this.enabled) return;
+        this.init();
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        const startFreq = 160 + Math.random() * 80;
+        osc.frequency.setValueAtTime(startFreq, t);
+        osc.frequency.exponentialRampToValueAtTime(80, t + 0.18);
+
+        gain.gain.setValueAtTime(Math.min(0.25 * velocity, 0.4), t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.2);
+        this.pulseVisualizer();
+      }
+
+      // Soap slice / foam cutting crunch
+      slice() {
+        if (!this.enabled) return;
+        this.init();
+        const t = this.ctx.currentTime;
+        const bufferSize = this.ctx.sampleRate * 0.06;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(2800 + Math.random() * 1000, t);
+        filter.Q.setValueAtTime(3.5, t);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.28, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start(t);
+        this.pulseVisualizer();
+      }
+
+      // Zen water drop / chime
+      chime(freq = 520) {
+        if (!this.enabled) return;
+        this.init();
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t);
+
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 1.25);
+        this.pulseVisualizer();
+      }
+
+      // Tactile mechanical switch click
+      mechanicalClick(state = true) {
+        if (!this.enabled) return;
+        this.init();
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(state ? 980 : 720, t);
+        osc.frequency.exponentialRampToValueAtTime(state ? 300 : 220, t + 0.035);
+
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.045);
+        this.pulseVisualizer();
+      }
+
+      // Soothing Ambient Drone Synthesizer
+      toggleAmbient() {
+        this.init();
+        if (this.ambientPlaying) {
+          if (this.ambientGain) {
+            this.ambientGain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 1);
+            setTimeout(() => {
+              this.ambientOscs.forEach(o => { try { o.stop(); } catch(e){} });
+              this.ambientOscs = [];
+            }, 1050);
+          }
+          this.ambientPlaying = false;
+          return false;
+        } else {
+          this.ambientGain = this.ctx.createGain();
+          this.ambientGain.gain.setValueAtTime(0.0001, this.ctx.currentTime);
+          this.ambientGain.gain.exponentialRampToValueAtTime(0.12, this.ctx.currentTime + 2.5);
+          this.ambientGain.connect(this.ctx.destination);
+
+          // Harmonic pentatonic chords (432Hz base)
+          const notes = [108, 162, 216, 270, 324];
+          this.ambientOscs = notes.map((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            
+            // Subtle slow vibrato LFO
+            const lfo = this.ctx.createOscillator();
+            const lfoGain = this.ctx.createGain();
+            lfo.frequency.value = 0.12 + i * 0.05;
+            lfoGain.gain.value = 2.5;
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc.frequency);
+            lfo.start();
+
+            osc.connect(this.ambientGain);
+            osc.start();
+            return osc;
+          });
+          this.ambientPlaying = true;
+          return true;
+        }
+      }
+
+      pulseVisualizer() {
+        const bars = document.querySelectorAll('.audio-visualizer .bar');
+        bars.forEach(b => {
+          b.style.height = `${6 + Math.random() * 14}px`;
+          setTimeout(() => { b.style.height = '4px'; }, 140);
+        });
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    /* =====================================================================
+       2. AMBIENT BACKGROUND GLOW
+       ===================================================================== */
+    const ambCanvas = document.getElementById('ambient-canvas');
+    const ambCtx = ambCanvas.getContext('2d');
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+
+    function resizeCanvas() {
+      ambCanvas.width = window.innerWidth;
+      ambCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    window.addEventListener('pointermove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    function drawAmbient() {
+      ambCtx.clearRect(0, 0, ambCanvas.width, ambCanvas.height);
+      const grad = ambCtx.createRadialGradient(
+        mouseX, mouseY, 40,
+        mouseX, mouseY, 500
+      );
+      grad.addColorStop(0, 'rgba(0, 242, 254, 0.12)');
+      grad.addColorStop(0.5, 'rgba(121, 40, 202, 0.06)');
+      grad.addColorStop(1, 'rgba(11, 13, 20, 0)');
+
+      ambCtx.fillStyle = grad;
+      ambCtx.fillRect(0, 0, ambCanvas.width, ambCanvas.height);
+      requestAnimationFrame(drawAmbient);
+    }
+    drawAmbient();
+
+    /* =====================================================================
+       3. TOAST & NOTIFICATIONS
+       ===================================================================== */
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    /* =====================================================================
+       4. MODE 1: SOFT-BODY JELLY / SLIME
+       ===================================================================== */
+    class JellyStage {
+      constructor() {
+        this.canvas = document.getElementById('jelly-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.points = [];
+        this.numPoints = 28;
+        this.center = { x: 0, y: 0, vx: 0, vy: 0 };
+        this.baseRadius = 140;
+        this.draggedPoint = null;
+        this.colorIndex = 0;
+        this.palettes = [
+          { main: '#00f2fe', glow: 'rgba(0, 242, 254, 0.5)', inner: '#ff2a85', name: 'Cyber Neon' },
+          { main: '#00ff88', glow: 'rgba(0, 255, 136, 0.5)', inner: '#ffd200', name: 'Toxic Lime' },
+          { main: '#ff2a85', glow: 'rgba(255, 42, 133, 0.5)', inner: '#7928ca', name: 'Bubblegum Slime' },
+          { main: '#ffd200', glow: 'rgba(255, 210, 0, 0.5)', inner: '#ff6b4a', name: 'Miel Dorada' }
+        ];
+        this.init();
+      }
+
+      init() {
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.resetPoints();
+        this.bindEvents();
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+        this.center.x = this.canvas.width / 2;
+        this.center.y = this.canvas.height / 2;
+      }
+
+      resetPoints() {
+        this.points = [];
+        for (let i = 0; i < this.numPoints; i++) {
+          const angle = (i / this.numPoints) * Math.PI * 2;
+          this.points.push({
+            x: this.center.x + Math.cos(angle) * this.baseRadius,
+            y: this.center.y + Math.sin(angle) * this.baseRadius,
+            vx: 0,
+            vy: 0,
+            targetRadius: this.baseRadius,
+            radius: this.baseRadius,
+            angle: angle
+          });
+        }
+      }
+
+      bindEvents() {
+        let isDown = false;
+        let lastMove = 0;
+
+        const handleDown = (x, y) => {
+          isDown = true;
+          let closest = null;
+          let minDist = 150;
+          this.points.forEach(p => {
+            const d = Math.hypot(p.x - x, p.y - y);
+            if (d < minDist) {
+              minDist = d;
+              closest = p;
+            }
+          });
+          const dCenter = Math.hypot(this.center.x - x, this.center.y - y);
+          if (dCenter < this.baseRadius * 0.7) {
+            this.dragCenter = true;
+          } else if (closest) {
+            this.draggedPoint = closest;
+          }
+          sound.squish(1.2);
+        };
+
+        const handleMove = (x, y) => {
+          if (!isDown) return;
+          const now = Date.now();
+          if (now - lastMove > 120) {
+            sound.squish(0.6);
+            lastMove = now;
+          }
+
+          if (this.dragCenter) {
+            const dx = (x - this.center.x) * 0.15;
+            const dy = (y - this.center.y) * 0.15;
+            this.center.x += dx;
+            this.center.y += dy;
+            this.points.forEach(p => {
+              p.x += dx;
+              p.y += dy;
+            });
+          } else if (this.draggedPoint) {
+            this.draggedPoint.x = x;
+            this.draggedPoint.y = y;
+          }
+        };
+
+        const handleUp = () => {
+          if (isDown) sound.squish(1.4);
+          isDown = false;
+          this.draggedPoint = null;
+          this.dragCenter = false;
+        };
+
+        this.canvas.addEventListener('pointerdown', e => handleDown(e.clientX, e.clientY));
+        window.addEventListener('pointermove', e => handleMove(e.clientX, e.clientY));
+        window.addEventListener('pointerup', handleUp);
+      }
+
+      cycleColor() {
+        this.colorIndex = (this.colorIndex + 1) % this.palettes.length;
+        showToast(`Color: ${this.palettes[this.colorIndex].name}`);
+      }
+
+      jiggle(force = 45) {
+        this.points.forEach(p => {
+          p.vx += (Math.random() - 0.5) * force;
+          p.vy += (Math.random() - 0.5) * force;
+        });
+        sound.squish(2.0);
+      }
+
+      update() {
+        // Return center towards screen center smoothly
+        const targetX = this.canvas.width / 2;
+        const targetY = this.canvas.height / 2;
+        this.center.vx += (targetX - this.center.x) * 0.015;
+        this.center.vy += (targetY - this.center.y) * 0.015;
+        this.center.vx *= 0.88;
+        this.center.vy *= 0.88;
+        this.center.x += this.center.vx;
+        this.center.y += this.center.vy;
+
+        // Springs between adjacent points and to center
+        const kCenter = 0.035;
+        const kNeighbour = 0.08;
+        const damping = 0.91;
+
+        for (let i = 0; i < this.numPoints; i++) {
+          const p = this.points[i];
+          if (p === this.draggedPoint) continue;
+
+          // Target point from center
+          const tx = this.center.x + Math.cos(p.angle) * p.targetRadius;
+          const ty = this.center.y + Math.sin(p.angle) * p.targetRadius;
+
+          p.vx += (tx - p.x) * kCenter;
+          p.vy += (ty - p.y) * kCenter;
+
+          // Neighbours
+          const prev = this.points[(i - 1 + this.numPoints) % this.numPoints];
+          const next = this.points[(i + 1) % this.numPoints];
+
+          p.vx += ((prev.x + next.x) / 2 - p.x) * kNeighbour;
+          p.vy += ((prev.y + next.y) / 2 - p.y) * kNeighbour;
+
+          p.vx *= damping;
+          p.vy *= damping;
+
+          p.x += p.vx;
+          p.y += p.vy;
+        }
+      }
+
+      render() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.update();
+
+        const curPalette = this.palettes[this.colorIndex];
+        const ctx = this.ctx;
+
+        ctx.save();
+        ctx.beginPath();
+        
+        // Draw smooth closed curved polygon
+        const p0 = this.points[0];
+        const last = this.points[this.numPoints - 1];
+        ctx.moveTo((last.x + p0.x) / 2, (last.y + p0.y) / 2);
+
+        for (let i = 0; i < this.numPoints; i++) {
+          const curr = this.points[i];
+          const nxt = this.points[(i + 1) % this.numPoints];
+          const midX = (curr.x + nxt.x) / 2;
+          const midY = (curr.y + nxt.y) / 2;
+          ctx.quadraticCurveTo(curr.x, curr.y, midX, midY);
+        }
+        ctx.closePath();
+
+        // Gorgeous jelly gradient fill
+        const jellyGrad = ctx.createRadialGradient(
+          this.center.x - 30, this.center.y - 30, 20,
+          this.center.x, this.center.y, this.baseRadius * 1.3
+        );
+        jellyGrad.addColorStop(0, curPalette.inner);
+        jellyGrad.addColorStop(0.7, curPalette.main);
+        jellyGrad.addColorStop(1, 'rgba(15, 23, 42, 0.9)');
+
+        ctx.fillStyle = jellyGrad;
+        ctx.shadowColor = curPalette.glow;
+        ctx.shadowBlur = 40;
+        ctx.fill();
+
+        // Gelatin specular highlight / reflection
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        // Inner eye / core glow
+        ctx.beginPath();
+        ctx.arc(this.center.x - 25, this.center.y - 25, 25, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.filter = 'blur(4px)';
+        ctx.fill();
+        ctx.filter = 'none';
+
+        ctx.restore();
+      }
+    }
+
+    /* =====================================================================
+       5. MODE 2: BUBBLE WRAP 3D
+       ===================================================================== */
+    class BubbleStage {
+      constructor() {
+        this.container = document.getElementById('bubble-container');
+        this.totalBubbles = 84;
+        this.init();
+      }
+
+      init() {
+        this.container.innerHTML = '';
+        for (let i = 0; i < this.totalBubbles; i++) {
+          const bubble = document.createElement('div');
+          bubble.className = 'bubble';
+          const pitchVariation = 0.85 + (i % 12) * 0.04;
+          
+          const popHandler = () => {
+            if (!bubble.classList.contains('popped')) {
+              bubble.classList.add('popped');
+              sound.pop(pitchVariation);
+              this.spawnPopParticles(bubble);
+            }
+          };
+
+          bubble.addEventListener('pointerdown', popHandler);
+          // Also pop on continuous drag
+          bubble.addEventListener('pointerenter', (e) => {
+            if (e.buttons === 1) popHandler();
+          });
+
+          this.container.appendChild(bubble);
+        }
+      }
+
+      popAll() {
+        const bubbles = this.container.querySelectorAll('.bubble:not(.popped)');
+        bubbles.forEach((b, idx) => {
+          setTimeout(() => {
+            b.classList.add('popped');
+            sound.pop(0.9 + (idx % 10) * 0.05);
+            this.spawnPopParticles(b);
+          }, idx * 28);
+        });
+      }
+
+      reset() {
+        const bubbles = this.container.querySelectorAll('.bubble');
+        bubbles.forEach(b => b.classList.remove('popped'));
+        showToast('¡Burbujas listas para volver a explotar!');
+      }
+
+      spawnPopParticles(element) {
+        const rect = element.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        for (let i = 0; i < 6; i++) {
+          const p = document.createElement('div');
+          p.className = 'particle';
+          p.style.width = '6px';
+          p.style.height = '6px';
+          p.style.left = `${cx}px`;
+          p.style.top = `${cy}px`;
+          p.style.background = '#00f2fe';
+          p.style.boxShadow = '0 0 8px #00f2fe';
+          document.body.appendChild(p);
+
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 20 + Math.random() * 35;
+          const dx = Math.cos(angle) * dist;
+          const dy = Math.sin(angle) * dist;
+
+          p.animate([
+            { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+            { transform: `translate(${dx}px, ${dy}px) scale(0)`, opacity: 0 }
+          ], {
+            duration: 350,
+            easing: 'ease-out'
+          }).onfinish = () => p.remove();
+        }
+      }
+    }
+
+    /* =====================================================================
+       6. MODE 3: SOAP CUTTER & VOXEL SLICER
+       ===================================================================== */
+    class CutterStage {
+      constructor() {
+        this.canvas = document.getElementById('cutter-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.blocks = [];
+        this.fallingCubes = [];
+        this.bladePos = { x: -100, y: -100 };
+        this.init();
+      }
+
+      init() {
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.resetGrid();
+        this.bindEvents();
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+
+      resetGrid() {
+        this.blocks = [];
+        this.fallingCubes = [];
+        const cols = 14;
+        const rows = 9;
+        const size = 42;
+        const startX = (this.canvas.width - cols * size) / 2;
+        const startY = (this.canvas.height - rows * size) / 2;
+
+        const colors = ['#ff758c', '#ff7eb3', '#7afcff', '#54e346', '#ffd200', '#c471ed'];
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            this.blocks.push({
+              x: startX + c * size,
+              y: startY + r * size,
+              size: size - 3,
+              color: colors[(r + c) % colors.length],
+              cut: false
+            });
+          }
+        }
+      }
+
+      bindEvents() {
+        let isDown = false;
+        const cut = (x, y) => {
+          this.bladePos = { x, y };
+          let slicedAny = false;
+          this.blocks.forEach(b => {
+            if (!b.cut) {
+              const d = Math.hypot(b.x + b.size / 2 - x, b.y + b.size / 2 - y);
+              if (d < b.size * 0.85) {
+                b.cut = true;
+                slicedAny = true;
+                this.fallingCubes.push({
+                  x: b.x,
+                  y: b.y,
+                  size: b.size,
+                  color: b.color,
+                  vx: (Math.random() - 0.5) * 6,
+                  vy: -2 - Math.random() * 4,
+                  rot: 0,
+                  vRot: (Math.random() - 0.5) * 0.2
+                });
+              }
+            }
+          });
+          if (slicedAny) sound.slice();
+        };
+
+        this.canvas.addEventListener('pointerdown', (e) => {
+          isDown = true;
+          cut(e.clientX, e.clientY);
+        });
+        window.addEventListener('pointermove', (e) => {
+          if (isDown) cut(e.clientX, e.clientY);
+          this.bladePos = { x: e.clientX, y: e.clientY };
+        });
+        window.addEventListener('pointerup', () => isDown = false);
+      }
+
+      render() {
+        const ctx = this.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Draw uncut soap blocks with 3D beveled appearance
+        this.blocks.forEach(b => {
+          if (!b.cut) {
+            ctx.fillStyle = b.color;
+            ctx.shadowColor = b.color;
+            ctx.shadowBlur = 8;
+            ctx.fillRect(b.x, b.y, b.size, b.size);
+            
+            // Bevel highlights
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(b.x, b.y, b.size, 4);
+            ctx.fillRect(b.x, b.y, 4, b.size);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+            ctx.fillRect(b.x, b.y + b.size - 4, b.size, 4);
+            ctx.fillRect(b.x + b.size - 4, b.y, 4, b.size);
+          }
+        });
+        ctx.shadowBlur = 0;
+
+        // Update and draw falling cubes physics
+        for (let i = this.fallingCubes.length - 1; i >= 0; i--) {
+          const c = this.fallingCubes[i];
+          c.vy += 0.35; // gravity
+          c.x += c.vx;
+          c.y += c.vy;
+          c.rot += c.vRot;
+
+          ctx.save();
+          ctx.translate(c.x + c.size / 2, c.y + c.size / 2);
+          ctx.rotate(c.rot);
+          ctx.fillStyle = c.color;
+          ctx.shadowColor = c.color;
+          ctx.shadowBlur = 12;
+          ctx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size);
+          ctx.restore();
+
+          if (c.y > this.canvas.height + 100) {
+            this.fallingCubes.splice(i, 1);
+          }
+        }
+
+        // Draw blade trail / cutting reticle
+        if (this.bladePos.x > 0) {
+          ctx.beginPath();
+          ctx.arc(this.bladePos.x, this.bladePos.y, 14, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.shadowColor = '#00f2fe';
+          ctx.shadowBlur = 20;
+          ctx.fill();
+        }
+      }
+    }
+
+    /* =====================================================================
+       7. MODE 4: ZEN SAND RIPPLES & WATER
+       ===================================================================== */
+    class SandStage {
+      constructor() {
+        this.canvas = document.getElementById('sand-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.ripples = [];
+        this.init();
+      }
+
+      init() {
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.bindEvents();
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+
+      bindEvents() {
+        let isDown = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        const addRipple = (x, y, radius = 8) => {
+          const notes = [261.6, 329.6, 392.0, 493.8, 523.2, 659.2];
+          const chosenNote = notes[Math.floor(Math.random() * notes.length)];
+          sound.chime(chosenNote);
+
+          this.ripples.push({
+            x, y,
+            radius,
+            maxRadius: 180 + Math.random() * 80,
+            alpha: 1,
+            speed: 2.2 + Math.random() * 1.5,
+            color: '#00f2fe'
+          });
+        };
+
+        this.canvas.addEventListener('pointerdown', (e) => {
+          isDown = true;
+          lastX = e.clientX;
+          lastY = e.clientY;
+          addRipple(e.clientX, e.clientY, 15);
+        });
+
+        window.addEventListener('pointermove', (e) => {
+          if (!isDown) return;
+          const d = Math.hypot(e.clientX - lastX, e.clientY - lastY);
+          if (d > 35) {
+            addRipple(e.clientX, e.clientY, 6);
+            lastX = e.clientX;
+            lastY = e.clientY;
+          }
+        });
+
+        window.addEventListener('pointerup', () => isDown = false);
+      }
+
+      clear() {
+        this.ripples = [];
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        showToast('Arena Zen despejada.');
+      }
+
+      render() {
+        const ctx = this.ctx;
+        // Fade out trail
+        ctx.fillStyle = 'rgba(11, 13, 20, 0.08)';
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        for (let i = this.ripples.length - 1; i >= 0; i--) {
+          const r = this.ripples[i];
+          r.radius += r.speed;
+          r.alpha *= 0.965;
+
+          ctx.beginPath();
+          ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(0, 242, 254, ${r.alpha})`;
+          ctx.lineWidth = 3;
+          ctx.shadowColor = '#00f2fe';
+          ctx.shadowBlur = 10;
+          ctx.stroke();
+
+          // Echo secondary concentric ring
+          if (r.radius > 25) {
+            ctx.beginPath();
+            ctx.arc(r.x, r.y, r.radius - 20, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(121, 40, 202, ${r.alpha * 0.6})`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+
+          if (r.alpha < 0.02 || r.radius > r.maxRadius) {
+            this.ripples.splice(i, 1);
+          }
+        }
+      }
+    }
+
+    /* =====================================================================
+       8. MODE 5: MAGNETIC MARBLES & GRAVITY
+       ===================================================================== */
+    class MarbleStage {
+      constructor() {
+        this.canvas = document.getElementById('marbles-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.particles = [];
+        this.numParticles = 240;
+        this.attractor = { x: -1000, y: -1000, active: false, mode: 'attract' };
+        this.init();
+      }
+
+      init() {
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.resetParticles();
+        this.bindEvents();
+      }
+
+      resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+
+      resetParticles() {
+        this.particles = [];
+        const colors = ['#00f2fe', '#ff2a85', '#ffd200', '#00ff88', '#9d4edd'];
+        for (let i = 0; i < this.numParticles; i++) {
+          this.particles.push({
+            x: Math.random() * this.canvas.width,
+            y: Math.random() * this.canvas.height,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4,
+            radius: 4 + Math.random() * 5,
+            color: colors[i % colors.length]
+          });
+        }
+      }
+
+      toggleMode() {
+        this.attractor.mode = this.attractor.mode === 'attract' ? 'repel' : 'attract';
+        showToast(this.attractor.mode === 'attract' ? 'Modo: Imán de atracción' : 'Modo: Onda expansiva');
+      }
+
+      bindEvents() {
+        this.canvas.addEventListener('pointerdown', (e) => {
+          this.attractor.active = true;
+          this.attractor.x = e.clientX;
+          this.attractor.y = e.clientY;
+          sound.pop(1.6);
+        });
+
+        window.addEventListener('pointermove', (e) => {
+          if (this.attractor.active) {
+            this.attractor.x = e.clientX;
+            this.attractor.y = e.clientY;
+          }
+        });
+
+        window.addEventListener('pointerup', () => {
+          this.attractor.active = false;
+        });
+      }
+
+      render() {
+        const ctx = this.ctx;
+        ctx.fillStyle = 'rgba(11, 13, 20, 0.2)';
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        this.particles.forEach(p => {
+          if (this.attractor.active) {
+            const dx = this.attractor.x - p.x;
+            const dy = this.attractor.y - p.y;
+            const dist = Math.hypot(dx, dy) + 10;
+            const force = (this.attractor.mode === 'attract' ? 600 : -1000) / (dist * dist);
+            p.vx += (dx / dist) * force;
+            p.vy += (dy / dist) * force;
+          }
+
+          // Damping
+          p.vx *= 0.975;
+          p.vy *= 0.975;
+
+          p.x += p.vx;
+          p.y += p.vy;
+
+          // Wall bounce
+          if (p.x < p.radius) { p.x = p.radius; p.vx *= -0.8; }
+          if (p.x > w - p.radius) { p.x = w - p.radius; p.vx *= -0.8; }
+          if (p.y < p.radius) { p.y = p.radius; p.vy *= -0.8; }
+          if (p.y > h - p.radius) { p.y = h - p.radius; p.vy *= -0.8; }
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 10;
+          ctx.fill();
+        });
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    /* =====================================================================
+       9. MODE 6: TACTILE MECHANICAL SWITCHBOARD
+       ===================================================================== */
+    class SwitchboardStage {
+      constructor() {
+        this.board = document.getElementById('board-matrix');
+        this.init();
+      }
+
+      init() {
+        this.board.innerHTML = '';
+        const items = [
+          { type: 'rocker', label: 'Energía' },
+          { type: 'button', label: 'Pulso ASMR' },
+          { type: 'rocker', label: 'Vibración' },
+          { type: 'button', label: 'Campana' },
+          { type: 'rocker', label: 'Flujo Cuántico' },
+          { type: 'button', label: 'Hiper-Salto' },
+          { type: 'rocker', label: 'Resonancia' },
+          { type: 'button', label: 'Reseteo' }
+        ];
+
+        items.forEach((item, index) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'switch-item';
+
+          if (item.type === 'rocker') {
+            const rocker = document.createElement('div');
+            rocker.className = 'toggle-rocker';
+            rocker.innerHTML = '<div class="handle"></div>';
+            
+            rocker.addEventListener('click', () => {
+              const isOn = rocker.classList.toggle('on');
+              sound.mechanicalClick(isOn);
+              this.createRipple(rocker);
+            });
+            wrapper.appendChild(rocker);
+          } else {
+            const btn = document.createElement('div');
+            btn.className = 'tactile-button';
+            btn.innerHTML = '<div class="tactile-button-core"></div>';
+
+            btn.addEventListener('pointerdown', () => {
+              sound.mechanicalClick(true);
+              sound.chime(440 + index * 60);
+              this.createRipple(btn);
+            });
+            wrapper.appendChild(btn);
+          }
+
+          const label = document.createElement('div');
+          label.className = 'switch-label';
+          label.innerText = item.label;
+          wrapper.appendChild(label);
+
+          this.board.appendChild(wrapper);
+        });
+      }
+
+      triggerAll() {
+        const rockers = this.board.querySelectorAll('.toggle-rocker');
+        rockers.forEach((r, i) => {
+          setTimeout(() => {
+            const state = r.classList.toggle('on');
+            sound.mechanicalClick(state);
+            this.createRipple(r);
+          }, i * 75);
+        });
+      }
+
+      createRipple(elem) {
+        const rect = elem.getBoundingClientRect();
+        const r = document.createElement('div');
+        r.className = 'ripple-effect';
+        r.style.left = `${rect.left + rect.width / 2}px`;
+        r.style.top = `${rect.top + rect.height / 2}px`;
+        r.style.width = '60px';
+        r.style.height = '60px';
+        document.body.appendChild(r);
+        setTimeout(() => r.remove(), 600);
+      }
+    }
+
+    /* =====================================================================
+       10. APP CONTROLLER & MODE COORDINATOR
+       ===================================================================== */
+    class App {
+      constructor() {
+        this.stages = {
+          jelly: new JellyStage(),
+          bubbles: new BubbleStage(),
+          cutter: new CutterStage(),
+          sand: new SandStage(),
+          marbles: new MarbleStage(),
+          switchboard: new SwitchboardStage()
+        };
+        this.currentMode = 'jelly';
+        this.initHUD();
+        this.initGlobalEvents();
+        this.startLoop();
+      }
+
+      initGlobalEvents() {
+        // Tab switching
+        const tabs = document.querySelectorAll('.mode-btn');
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            const mode = tab.dataset.mode;
+            this.switchMode(mode);
+          });
+        });
+
+        // Sound on/off
+        const btnSound = document.getElementById('btn-sound');
+        btnSound.addEventListener('click', () => {
+          sound.enabled = !sound.enabled;
+          btnSound.classList.toggle('active', sound.enabled);
+          btnSound.innerText = sound.enabled ? '🔊' : '🔇';
+          showToast(sound.enabled ? 'Sonido activado' : 'Sonido silenciado');
+        });
+
+        // Ambient Zen Music on/off
+        const btnAmbient = document.getElementById('btn-ambient');
+        btnAmbient.addEventListener('click', () => {
+          const isPlaying = sound.toggleAmbient();
+          btnAmbient.classList.toggle('active', isPlaying);
+          showToast(isPlaying ? 'Música Zen activada' : 'Música Zen pausada');
+        });
+
+        // Fullscreen toggle
+        const btnFs = document.getElementById('btn-fullscreen');
+        btnFs.addEventListener('click', () => {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          } else {
+            document.exitFullscreen().catch(() => {});
+          }
+        });
+      }
+
+      switchMode(mode) {
+        if (!this.stages[mode]) return;
+        this.currentMode = mode;
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+
+        document.querySelectorAll('.mode-stage').forEach(stage => {
+          stage.classList.remove('active');
+        });
+
+        const activeStageEl = document.getElementById(`stage-${mode}`);
+        if (activeStageEl) activeStageEl.classList.add('active');
+
+        this.updateHUD(mode);
+        sound.pop(1.2);
+      }
+
+      initHUD() {
+        this.updateHUD('jelly');
+      }
+
+      updateHUD(mode) {
+        const text = document.getElementById('hud-text');
+        const actions = document.getElementById('hud-actions');
+        actions.innerHTML = '';
+
+        if (mode === 'jelly') {
+          text.innerText = 'Arrastra, estira y suelta para disfrutar del jiggle físico.';
+          
+          const btnColor = document.createElement('button');
+          btnColor.className = 'hud-action-btn';
+          btnColor.innerText = '🎨 Cambiar Color';
+          btnColor.onclick = () => this.stages.jelly.cycleColor();
+          
+          const btnJiggle = document.createElement('button');
+          btnJiggle.className = 'hud-action-btn';
+          btnJiggle.innerText = '⚡ Sacudir';
+          btnJiggle.onclick = () => this.stages.jelly.jiggle();
+
+          actions.appendChild(btnColor);
+          actions.appendChild(btnJiggle);
+        } else if (mode === 'bubbles') {
+          text.innerText = 'Haz click o arrastra sobre las burbujas para explotarlas todas.';
+
+          const btnPopAll = document.createElement('button');
+          btnPopAll.className = 'hud-action-btn';
+          btnPopAll.innerText = '💥 Explotar Todas';
+          btnPopAll.onclick = () => this.stages.bubbles.popAll();
+
+          const btnReset = document.createElement('button');
+          btnReset.className = 'hud-action-btn';
+          btnReset.innerText = '🔄 Reiniciar';
+          btnReset.onclick = () => this.stages.bubbles.reset();
+
+          actions.appendChild(btnPopAll);
+          actions.appendChild(btnReset);
+        } else if (mode === 'cutter') {
+          text.innerText = 'Desliza el cursor sobre los cubos para rebanarlos como jabón crujiente.';
+
+          const btnReset = document.createElement('button');
+          btnReset.className = 'hud-action-btn';
+          btnReset.innerText = '🧼 Nuevo Bloque';
+          btnReset.onclick = () => {
+            this.stages.cutter.resetGrid();
+            showToast('Nuevo bloque de jabón listo.');
+          };
+          actions.appendChild(btnReset);
+        } else if (mode === 'sand') {
+          text.innerText = 'Mueve el puntero para crear ondas armónicas y sonidos zen.';
+
+          const btnClear = document.createElement('button');
+          btnClear.className = 'hud-action-btn';
+          btnClear.innerText = '🧹 Despejar Arena';
+          btnClear.onclick = () => this.stages.sand.clear();
+          actions.appendChild(btnClear);
+        } else if (mode === 'marbles') {
+          text.innerText = 'Mantén presionado para atraer las partículas cuánticas.';
+
+          const btnMode = document.createElement('button');
+          btnMode.className = 'hud-action-btn';
+          btnMode.innerText = '🧲 Cambiar Polaridad';
+          btnMode.onclick = () => this.stages.marbles.toggleMode();
+          actions.appendChild(btnMode);
+        } else if (mode === 'switchboard') {
+          text.innerText = 'Toca los interruptores y botones con respuesta auditiva realista.';
+
+          const btnCascade = document.createElement('button');
+          btnCascade.className = 'hud-action-btn';
+          btnCascade.innerText = '⚡ Cascada Dominó';
+          btnCascade.onclick = () => this.stages.switchboard.triggerAll();
+          actions.appendChild(btnCascade);
+        }
+      }
+
+      startLoop() {
+        const loop = () => {
+          if (this.currentMode === 'jelly') {
+            this.stages.jelly.render();
+          } else if (this.currentMode === 'cutter') {
+            this.stages.cutter.render();
+          } else if (this.currentMode === 'sand') {
+            this.stages.sand.render();
+          } else if (this.currentMode === 'marbles') {
+            this.stages.marbles.render();
+          }
+          requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+      }
+    }
+
+    // Launch Application
+    window.addEventListener('DOMContentLoaded', () => {
+      new App();
+    });
+  </script>
+</body>
+</html>
